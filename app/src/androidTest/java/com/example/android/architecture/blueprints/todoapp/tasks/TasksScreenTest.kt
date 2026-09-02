@@ -16,10 +16,13 @@
 
 package com.example.android.architecture.blueprints.todoapp.tasks
 
+import androidx.activity.ComponentActivity
 import androidx.annotation.StringRes
 import androidx.compose.material3.Surface
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -31,6 +34,9 @@ import com.example.android.architecture.blueprints.todoapp.HiltTestActivity
 import com.example.android.architecture.blueprints.todoapp.R
 import com.example.android.architecture.blueprints.todoapp.TodoTheme
 import com.example.android.architecture.blueprints.todoapp.data.TaskRepository
+import com.example.android.architecture.blueprints.todoapp.tasks.GeneralScreenSteps.then_screen_shows
+import com.example.android.architecture.blueprints.todoapp.tasks.TasksScreenSteps.given_is_shown_tasks_screen
+import com.example.android.architecture.blueprints.todoapp.tasks.TasksScreenSteps.when_user_in_filter_selects_option
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,6 +44,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 import javax.inject.Inject
 
@@ -226,13 +233,20 @@ class TasksScreenTest {
     }
 
     @Test
-    fun noTasks_AllTasksFilter_AddTaskViewVisible() {
+    fun OLD_noTasks_AllTasksFilter_AddTaskViewVisible() {
         setContent()
 
         openFilterAndSelectOption(R.string.nav_all)
 
         // Verify the "You have no tasks!" text is shown
         composeTestRule.onNodeWithText("You have no tasks!").assertIsDisplayed()
+    }
+
+    @Test
+    fun NEW_noTasks_AllTasksFilter_AddTaskViewVisible() {
+        val tasks_screen = given_is_shown_tasks_screen(composeTestRule, repository)
+        tasks_screen.when_user_in_filter_selects_option("all")
+        tasks_screen.then_screen_shows("You have no tasks!")
     }
 
     @Test
@@ -275,5 +289,53 @@ class TasksScreenTest {
             .performClick()
         composeTestRule.onNodeWithText(activity.getString(option)).assertIsDisplayed()
         composeTestRule.onNodeWithText(activity.getString(option)).performClick()
+    }
+}
+
+
+object TasksScreenSteps {
+
+    fun <R : TestRule, A : ComponentActivity> given_is_shown_tasks_screen(
+        androTestRule: AndroidComposeTestRule<R, A>,
+        repository: TaskRepository
+    ): AndroidComposeTestRule<R, A> {
+        androTestRule.setContent {
+            TodoTheme {
+                Surface {
+                    TasksScreen(
+                        viewModel = TasksViewModel(repository, SavedStateHandle()),
+                        userMessage = R.string.successfully_added_task_message,
+                        onUserMessageDisplayed = { },
+                        onAddTask = { },
+                        onTaskClick = { },
+                        openDrawer = { }
+                    )
+                }
+            }
+        }
+
+        return androTestRule
+    }
+
+    fun <R : TestRule, A : ComponentActivity> AndroidComposeTestRule<R, A>.when_user_in_filter_selects_option(option: String) {
+        val optionId = when (option) {
+            "all" -> R.string.nav_all
+            else -> throw RuntimeException("unknown option: $option")
+        }
+        this.onNodeWithContentDescription(activity.getString(R.string.menu_filter)).performClick()
+        this.onNodeWithText(activity.getString(optionId)).assertIsDisplayed()
+        this.onNodeWithText(activity.getString(optionId)).performClick()
+
+    }
+}
+
+
+object GeneralScreenSteps {
+    fun <R : TestRule, A : ComponentActivity> AndroidComposeTestRule<R, A>.then_screen_shows(text: String) {
+        this.onNodeWithText(text).assertIsDisplayed()
+    }
+
+    fun <R : TestRule, A : ComponentActivity> AndroidComposeTestRule<R, A>.then_screen_doesnt_show(text: String) {
+        this.onNodeWithText(text).assertIsNotDisplayed()
     }
 }

@@ -16,9 +16,11 @@
 
 package com.example.android.architecture.blueprints.todoapp.tasks
 
+import androidx.activity.ComponentActivity
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -32,6 +34,11 @@ import com.example.android.architecture.blueprints.todoapp.R
 import com.example.android.architecture.blueprints.todoapp.TodoNavGraph
 import com.example.android.architecture.blueprints.todoapp.TodoTheme
 import com.example.android.architecture.blueprints.todoapp.data.TaskRepository
+import com.example.android.architecture.blueprints.todoapp.tasks.GeneralScreenSteps.then_screen_shows
+import com.example.android.architecture.blueprints.todoapp.tasks.NavGraphScreenSteps.given_is_shown_navi_screen
+import com.example.android.architecture.blueprints.todoapp.tasks.NavGraphScreenSteps.when_user_clicks_drawer
+import com.example.android.architecture.blueprints.todoapp.tasks.NavGraphScreenSteps.when_user_in_drawer_clicks_statistics
+import com.example.android.architecture.blueprints.todoapp.tasks.NavGraphScreenSteps.when_user_in_drawer_clicks_tasks
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.test.runTest
@@ -39,6 +46,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TestRule
 import org.junit.runner.RunWith
 import javax.inject.Inject
 
@@ -70,7 +78,7 @@ class AppNavigationTest {
     }
 
     @Test
-    fun drawerNavigationFromTasksToStatistics() {
+    fun OLD_drawerNavigationFromTasksToStatistics() {
         setContent()
 
         openDrawer()
@@ -86,6 +94,19 @@ class AppNavigationTest {
         // Check that tasks screen was opened.
         composeTestRule.onNodeWithText(activity.getString(R.string.no_tasks_all))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun NEW_drawerNavigationFromTasksToStatistics() {
+        val navi_screen = given_is_shown_navi_screen(composeTestRule)
+
+        navi_screen.when_user_clicks_drawer()
+        navi_screen.when_user_in_drawer_clicks_statistics()
+        navi_screen.then_screen_shows("You have no tasks.")
+
+        navi_screen.when_user_clicks_drawer()
+        navi_screen.when_user_in_drawer_clicks_tasks()
+        navi_screen.then_screen_shows("You have no tasks!")
     }
 
     @Test
@@ -190,5 +211,33 @@ class AppNavigationTest {
     private fun openDrawer() {
         composeTestRule.onNodeWithContentDescription(activity.getString(R.string.open_drawer))
             .performClick()
+    }
+}
+
+
+object NavGraphScreenSteps {
+
+    fun <R : TestRule, A : ComponentActivity> given_is_shown_navi_screen(
+        androTestRule: AndroidComposeTestRule<R, A>
+    ): AndroidComposeTestRule<R, A> {
+        androTestRule.setContent {
+            TodoTheme {
+                TodoNavGraph()
+            }
+        }
+        return androTestRule
+    }
+
+    fun <R : TestRule, A : ComponentActivity> AndroidComposeTestRule<R, A>.when_user_clicks_drawer() {
+        onNodeWithContentDescription(activity.getString(R.string.open_drawer))
+            .performClick()
+    }
+
+    fun <R : TestRule, A : ComponentActivity> AndroidComposeTestRule<R, A>.when_user_in_drawer_clicks_statistics() {
+        onNodeWithText(activity.getString(R.string.statistics_title)).performClick()
+    }
+
+    fun <R : TestRule, A : ComponentActivity> AndroidComposeTestRule<R, A>.when_user_in_drawer_clicks_tasks() {
+        onNodeWithText(activity.getString(R.string.list_title)).performClick()
     }
 }
