@@ -1,16 +1,13 @@
 package dev.hotest
 
 
-// todo: dorobic tez wariant z Map, bo bezpieczniejszy np. myMap['colA'] i jak U zmieni tabele to sie nie posypie
-// - fun <MyRow> parseTable(table: String, converter: (Map<String,String>) -> MyRow): Table<MyRow> {
-// - i wtedy `converter: (List<String>) ..` to special case of Map
 
-fun <TRow> parseTable(table: String, converterRow: (List<String>) -> TRow): Table<TRow> {
-    val tableData = parseTableData(table)
-    TODO()
+fun <TRow> parseTable(table: String, rowConverter: (List<String>) -> TRow): Table<TRow> {
+    val rawTable = parseRawTable(table)
+    return Table(rawTable.rows.map(rowConverter))
 }
 
-fun parseTableData(table: String): RawTable {
+fun parseRawTable(table: String): RawTable {
     val tableRows = table
         .lineSequence()
         .map(String::trim)

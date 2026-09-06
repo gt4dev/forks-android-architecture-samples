@@ -35,8 +35,8 @@ import com.example.android.architecture.blueprints.todoapp.R
 import com.example.android.architecture.blueprints.todoapp.TodoTheme
 import com.example.android.architecture.blueprints.todoapp.data.TaskRepository
 import com.example.android.architecture.blueprints.todoapp.tasks.GeneralScreenSteps.then_it_doesnt_show
-import com.example.android.architecture.blueprints.todoapp.tasks.GeneralScreenSteps.then_it_shows
-import com.example.android.architecture.blueprints.todoapp.tasks.TaskRepositorySteps.given_it_has_tasks
+import com.example.android.architecture.blueprints.todoapp.tasks.GeneralScreenSteps.then_shows
+import com.example.android.architecture.blueprints.todoapp.tasks.TaskRepositorySteps.given_has_tasks
 import com.example.android.architecture.blueprints.todoapp.tasks.TasksScreenSteps.given_is_shown_tasks_screen
 import com.example.android.architecture.blueprints.todoapp.tasks.TasksScreenSteps.when_user_in_filter_selects_option
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -198,19 +198,21 @@ class TasksScreenTest {
     @Test
     fun NEW_showActiveTasks() = runTest {
 
-        repository.given_it_has_tasks(
+        repository.given_has_tasks(
             """
-              | title  | desc         | cost | is completed
-              | TITLE1 | DESCRIPTION1 | 1.23 | false
-              | TITLE2 | DESCRIPTION2 | 0.5  |
-              | TITLE3 | DESCRIPTION3 |      | true
-            """.trimIndent()
+              | title  | desc         | is completed |
+              | TITLE1 | DESCRIPTION1 |              |
+              | TITLE2 | DESCRIPTION2 |              |
+              | TITLE3 | DESCRIPTION3 | true         |
+            """
         )
 
         val tasks_screen = given_is_shown_tasks_screen(composeTestRule, repository)
 
-        tasks_screen.then_it_shows("TITLE1")
-        tasks_screen.then_it_shows("TITLE2")
+        tasks_screen.when_user_in_filter_selects_option("active")
+
+        tasks_screen.then_shows("TITLE1")
+        tasks_screen.then_shows("TITLE2")
         tasks_screen.then_it_doesnt_show("TITLE3") // completed aren't shown
     }
 
@@ -268,7 +270,7 @@ class TasksScreenTest {
     fun NEW_noTasks_AllTasksFilter_AddTaskViewVisible() {
         val tasks_screen = given_is_shown_tasks_screen(composeTestRule, repository)
         tasks_screen.when_user_in_filter_selects_option("all")
-        tasks_screen.then_it_shows("You have no tasks!")
+        tasks_screen.then_shows("You have no tasks!")
     }
 
     @Test
@@ -342,6 +344,7 @@ object TasksScreenSteps {
     fun <R : TestRule, A : ComponentActivity> AndroidComposeTestRule<R, A>.when_user_in_filter_selects_option(option: String) {
         val optionId = when (option) {
             "all" -> R.string.nav_all
+            "active" -> R.string.nav_active
             else -> throw RuntimeException("unknown option: $option")
         }
         this.onNodeWithContentDescription(activity.getString(R.string.menu_filter)).performClick()
@@ -353,7 +356,7 @@ object TasksScreenSteps {
 
 
 object GeneralScreenSteps {
-    fun <R : TestRule, A : ComponentActivity> AndroidComposeTestRule<R, A>.then_it_shows(text: String) {
+    fun <R : TestRule, A : ComponentActivity> AndroidComposeTestRule<R, A>.then_shows(text: String) {
         this.onNodeWithText(text).assertIsDisplayed()
     }
 
@@ -364,37 +367,32 @@ object GeneralScreenSteps {
 
 
 object TaskRepositorySteps {
-    fun TaskRepository.given_it_has_tasks(dataTable: String) {
 
-        fun parseRow(columns: List<String>): Task {
-            return Task(
+    suspend fun TaskRepository.given_has_tasks(tableText: String) {
+
+        val tableData = parseTable(tableText) { columns ->
+            TaskRow(
                 title = columns[0],
                 desc = columns[1],
-                cost = columns[2].toNullableFloat(),
-                isCompleted = columns[3].toBooleanStrict()
+                isCompleted = columns[2].toBooleanStrictOrNull()
             )
         }
 
-        val table = parseTable(dataTable, ::parseRow)
-        table.rows.forEach { }
-//        val table = parseTable(dataTable)
-//        table.rows.forEach { row ->
-//            val title = row['title']
-//            val rate: Float = row['rate']
-//        }
-
+        tableData.rows.forEach { row ->
+            this.apply {
+                createTask(row.title, row.desc).also { taskId ->
+                    if (row.isCompleted == true) {
+                        completeTask(taskId)
+                    }
+                }
+            }
+        }
     }
 }
 
 
-data class Task(
+data class TaskRow(
     val title: String,
     val desc: String,
-    val cost: Float?,
-    val isCompleted: Boolean
+    val isCompleted: Boolean?
 )
-
-
-// utils
-fun String?.toNullableFloat(): Float? =
-    this?.takeIf { it.isNotEmpty() }?.toFloat()

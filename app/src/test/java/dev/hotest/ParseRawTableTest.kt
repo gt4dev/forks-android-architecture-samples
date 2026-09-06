@@ -5,11 +5,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
-class TableTest {
+class ParseRawTableTest {
 
     @Test
-    fun parseTableData_happy_day_scenario() {
-        val tableData = parseTableData(
+    fun parseRawTable_happy_day_scenario() {
+        val tableData = parseRawTable(
             """
             | col0  | col1  | col2  |
             | R0 C0 | R0 C1 | R0 C2 |
@@ -32,8 +32,8 @@ class TableTest {
     }
 
     @Test
-    fun parseTableData_table_is_not_pretty_printed() {
-        val tableData = parseTableData(
+    fun parseRawTable_table_is_not_pretty_printed() {
+        val tableData = parseRawTable(
             """
             |col0| col1       |col2|
             | R0 C0|R0 C1 | R0 C2|
@@ -51,8 +51,8 @@ class TableTest {
     }
 
     @Test
-    fun parseTableData_empty_cells() {
-        val tableData = parseTableData(
+    fun parseRawTable_empty_cells() {
+        val tableData = parseRawTable(
             """
             | col0  | col1  | col2  |
             | R0 C0 |       |       |
@@ -75,9 +75,9 @@ class TableTest {
     }
 
     @Test
-    fun parseTableData_row_has_too_few_columns() {
+    fun parseRawTable_row_has_too_few_columns() {
         val exception = assertThrows(IllegalArgumentException::class.java) {
-            parseTableData(
+            parseRawTable(
                 """
                 | col0  | col1  | col2  |
                 | R0 C0 | R0 C1 |
@@ -92,9 +92,9 @@ class TableTest {
     }
 
     @Test
-    fun parseTableData_row_has_too_many_columns() {
+    fun parseRawTable_row_has_too_many_columns() {
         val exception = assertThrows(IllegalArgumentException::class.java) {
-            parseTableData(
+            parseRawTable(
                 """
                 | col0  | col1  | col2  |
                 | R0 C0 | R0 C1 | R0 C2 | R0 C3 |

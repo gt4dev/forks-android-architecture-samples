@@ -34,7 +34,7 @@ import com.example.android.architecture.blueprints.todoapp.R
 import com.example.android.architecture.blueprints.todoapp.TodoNavGraph
 import com.example.android.architecture.blueprints.todoapp.TodoTheme
 import com.example.android.architecture.blueprints.todoapp.data.TaskRepository
-import com.example.android.architecture.blueprints.todoapp.tasks.GeneralScreenSteps.then_it_shows
+import com.example.android.architecture.blueprints.todoapp.tasks.GeneralScreenSteps.then_shows
 import com.example.android.architecture.blueprints.todoapp.tasks.NavGraphScreenSteps.given_is_shown_navi_screen
 import com.example.android.architecture.blueprints.todoapp.tasks.NavGraphScreenSteps.when_user_clicks_drawer
 import com.example.android.architecture.blueprints.todoapp.tasks.NavGraphScreenSteps.when_user_in_drawer_clicks_statistics
@@ -102,11 +102,11 @@ class AppNavigationTest {
 
         navi_screen.when_user_clicks_drawer()
         navi_screen.when_user_in_drawer_clicks_statistics()
-        navi_screen.then_it_shows("You have no tasks.")
+        navi_screen.then_shows("You have no tasks.")
 
         navi_screen.when_user_clicks_drawer()
         navi_screen.when_user_in_drawer_clicks_tasks()
-        navi_screen.then_it_shows("You have no tasks!")
+        navi_screen.then_shows("You have no tasks!")
     }
 
     @Test
